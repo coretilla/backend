@@ -9,7 +9,7 @@ import { User } from './entities';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     try {
@@ -112,8 +112,10 @@ export class UsersService {
     return this.updateUser({ id }, updateUserDto);
   }
 
-  async updateByWalletAddress(walletAddress: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async updateByWalletAddress(
+    walletAddress: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<User> {
     return this.updateUser({ wallet_address: walletAddress }, updateUserDto);
   }
-
 }
