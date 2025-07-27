@@ -1,7 +1,8 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseInterceptors } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { PrismaService } from './database/prisma.service';
+import { CacheInterceptor, CacheKey, CacheTTL } from './cache';
 
 @ApiTags('App')
 @Controller()
@@ -12,6 +13,9 @@ export class AppController {
   ) {}
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('hello')
+  @CacheTTL(60000) // 1 minute
   @ApiOperation({ summary: 'Get hello message' })
   @ApiResponse({ status: 200, description: 'Hello message' })
   getHello(): string {
@@ -19,6 +23,9 @@ export class AppController {
   }
 
   @Get('health')
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('health-check')
+  @CacheTTL(30000) // 30 seconds
   @ApiOperation({ summary: 'Health check endpoint' })
   @ApiResponse({
     status: 200,
