@@ -1,30 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsString,
-  Length,
-  Matches,
-  IsOptional,
-} from 'class-validator';
+import { IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class LoginUserDto {
-  @ApiProperty({
-    description: `User name (optional)
-    
-    - If provided: Uses the provided name
-    - If not provided: Automatically generates name using format 'user-{wallet_address}'
-    - If user already exists: This field is ignored`,
-    example: 'John Doe',
-    maxLength: 100,
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  @Length(1, 100, {
-    message: 'Name must be between 1 and 100 characters long',
-  })
-  name?: string;
-
   @ApiProperty({
     description: `Ethereum wallet address (always required)
     

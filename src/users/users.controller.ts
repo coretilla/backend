@@ -37,16 +37,8 @@ export class UsersController {
           wallet_address: '0x742d35Cc6596B0C7c5d3D4e3b2b0C8C6e7D8E9F0',
         },
       },
-      'new-user-with-name': {
-        summary: 'Create new user with custom name',
-        description: 'Both name and wallet address provided for new users',
-        value: {
-          name: 'John Doe',
-          wallet_address: '0x742d35Cc6596B0C7c5d3D4e3b2b0C8C6e7D8E9F0',
-        },
-      },
-      'new-user-auto-name': {
-        summary: 'Create new user with auto-generated name',
+      'new-user': {
+        summary: 'Create new user',
         description:
           'Only wallet address needed, name will be auto-generated as user-{wallet_address}',
         value: {
@@ -68,18 +60,10 @@ export class UsersController {
           wallet_address: '0x742d35Cc6596B0C7c5d3D4e3b2b0C8C6e7D8E9F0',
         },
       },
-      'new-user-custom-name': {
-        summary: 'New user with custom name',
-        value: {
-          id: 2,
-          name: 'John Doe',
-          wallet_address: '0x742d35Cc6596B0C7c5d3D4e3b2b0C8C6e7D8E9F0',
-        },
-      },
-      'new-user-auto-name': {
+      'new-user': {
         summary: 'New user with auto-generated name',
         value: {
-          id: 3,
+          id: 2,
           name: 'user-0x742d35Cc6596B0C7c5d3D4e3b2b0C8C6e7D8E9F0',
           wallet_address: '0x742d35Cc6596B0C7c5d3D4e3b2b0C8C6e7D8E9F0',
         },
@@ -243,7 +227,9 @@ export class UsersController {
     @Param('address') address: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<User> {
-    return await this.usersService.updateByWalletAddress(address, updateUserDto);
+    return await this.usersService.updateByWalletAddress(
+      address,
+      updateUserDto,
+    );
   }
-
 }

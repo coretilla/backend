@@ -69,9 +69,8 @@ export class UsersService {
       return existingUser;
     }
 
-    // If user doesn't exist, create new user
-    // If name is not provided, generate auto name with format user-{wallet_address}
-    const userName = loginUserDto.name || `user-${loginUserDto.wallet_address}`;
+    // If user doesn't exist, create new user with auto-generated name
+    const userName = `user-${loginUserDto.wallet_address}`;
 
     try {
       return await this.prisma.user.create({
