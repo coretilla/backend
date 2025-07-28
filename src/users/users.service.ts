@@ -4,64 +4,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { CreateUserDto, UpdateUserDto, LoginUserDto } from './dto';
+import { UpdateUserDto } from './dto';
 import { User } from './entities';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    try {
-      return await this.prisma.user.create({
-        data: createUserDto,
-      });
-    } catch (error) {
-      if (error.code === 'P2002') {
-        throw new ConflictException('Wallet address already exists');
-      }
-      throw error;
-    }
-  }
-
-  async findAll(): Promise<User[]> {
-    return await this.prisma.user.findMany({
-      orderBy: {
-        id: 'asc',
-      },
-    });
-  }
-
-  async findOne(id: number): Promise<User> {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
-    });
-
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-
-    return user;
-  }
-
-  async findByWalletAddress(walletAddress: string): Promise<User> {
-    const user = await this.prisma.user.findUnique({
-      where: { wallet_address: walletAddress },
-    });
-
-    if (!user) {
-      throw new NotFoundException(
-        `User with wallet address ${walletAddress} not found`,
-      );
-    }
-
-    return user;
-  }
-
-  async loginOrCreate(loginUserDto: LoginUserDto): Promise<User> {
+  async getCurrentUserOrCreate(walletAddress: string): Promise<User> {
     // Check if user with wallet address already exists
     const existingUser = await this.prisma.user.findUnique({
-      where: { wallet_address: loginUserDto.wallet_address },
+      where: { wallet_address: walletAddress },
     });
 
     // If user already exists, return the user data
@@ -70,13 +23,13 @@ export class UsersService {
     }
 
     // If user doesn't exist, create new user with auto-generated name
-    const userName = `user-${loginUserDto.wallet_address}`;
+    const userName = `user-${walletAddress}`;
 
     try {
       return await this.prisma.user.create({
         data: {
           name: userName,
-          wallet_address: loginUserDto.wallet_address,
+          wallet_address: walletAddress,
         },
       });
     } catch (error) {
@@ -85,7 +38,7 @@ export class UsersService {
       if (error.code === 'P2002') {
         // Try to get the user that was just created by another request
         const user = await this.prisma.user.findUnique({
-          where: { wallet_address: loginUserDto.wallet_address },
+          where: { wallet_address: walletAddress },
         });
         if (user) {
           return user;
@@ -96,25 +49,20 @@ export class UsersService {
     }
   }
 
-  private async updateUser(where: any, data: UpdateUserDto): Promise<User> {
+  async updateCurrentUser(
+    walletAddress: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<User> {
     try {
-      return await this.prisma.user.update({ where, data });
+      return await this.prisma.user.update({
+        where: { wallet_address: walletAddress },
+        data: updateUserDto,
+      });
     } catch (error) {
       if (error.code === 'P2025') {
         throw new NotFoundException('User not found');
       }
       throw error;
     }
-  }
-
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    return this.updateUser({ id }, updateUserDto);
-  }
-
-  async updateByWalletAddress(
-    walletAddress: string,
-    updateUserDto: UpdateUserDto,
-  ): Promise<User> {
-    return this.updateUser({ wallet_address: walletAddress }, updateUserDto);
   }
 }
