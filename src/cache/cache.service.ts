@@ -11,7 +11,10 @@ export class CacheService {
    */
   async get<T>(key: string): Promise<T | null> {
     try {
+      console.info(`[CacheService] Getting value for key: ${key}`);
       const value = await this.cacheManager.get<T>(key);
+      console.info(`[CacheService] Retrieved value for key: ${key}`, value);
+      console.info(`[CacheService] Value type for key ${key}:`, typeof value);
       return value ?? null;
     } catch (error) {
       console.error(`Cache get error for key ${key}:`, error);

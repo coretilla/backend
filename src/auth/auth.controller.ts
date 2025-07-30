@@ -22,6 +22,18 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Get()
+  @ApiOperation({
+    summary: 'Get hello message from auth service',
+    description: 'Public endpoint - No authentication required',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Hello message from auth service',
+    schema: {
+      type: 'string',
+      example: 'Hello from Auth Service!',
+    },
+  })
   getHello(): string {
     return this.authService.getHello();
   }
@@ -30,7 +42,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Generate nonce for wallet authentication',
     description:
-      'Generates a unique nonce (UUID) for a wallet address and stores it in cache for 2 minutes. The nonce is used for wallet signature verification during authentication process.',
+      'Generates a unique nonce (UUID) for a wallet address and stores it in cache for 2 minutes. The nonce is used for wallet signature verification during authentication process. **Public endpoint - No authentication required**',
   })
   @ApiQuery({
     name: 'walletAddress',
@@ -82,7 +94,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Sign in with wallet signature',
     description:
-      'Authenticates a user by verifying their wallet signature against the stored nonce. Returns an access token upon successful authentication.',
+      'Authenticates a user by verifying their wallet signature against the stored nonce. Returns an access token upon successful authentication. **Public endpoint - No authentication required**',
   })
   @ApiBody({
     type: SignInDto,

@@ -60,3 +60,9 @@ pnpm-workspace.yaml
 
 # prisma
 src/generated
+
+# scripts with sensitive data
+/scripts/
+
+# ai-digest
+codebase.md

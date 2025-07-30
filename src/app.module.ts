@@ -6,6 +6,9 @@ import { DatabaseModule } from './database';
 import { UsersModule } from './users/users.module';
 import { CacheModule } from './cache';
 import { AuthModule } from './auth/auth.module';
+import { StripeModule } from './stripe/stripe.module';
+import { PaymentsModule } from './payments/payments.module';
+import { StripeWebhookController } from './webhooks/stripe-webhook.controller';
 
 @Module({
   imports: [
@@ -16,8 +19,10 @@ import { AuthModule } from './auth/auth.module';
     DatabaseModule,
     UsersModule,
     AuthModule,
+    StripeModule,
+    PaymentsModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, StripeWebhookController],
   providers: [AppService],
 })
 export class AppModule {}

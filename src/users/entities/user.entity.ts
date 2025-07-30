@@ -18,4 +18,22 @@ export class User {
     example: '0x742d35Cc6596B0C7c5d3D4e3b2b0C8C6e7D8E9F0',
   })
   wallet_address: string;
+
+  @ApiProperty({
+    description: 'User balance in USD',
+    example: 150.5,
+  })
+  balance: number;
+
+  @ApiProperty({
+    description: 'Account creation timestamp',
+    example: '2025-01-29T10:30:00Z',
+  })
+  created_at: Date;
+
+  @ApiProperty({
+    description: 'Last update timestamp',
+    example: '2025-01-29T10:35:00Z',
+  })
+  updated_at: Date;
 }

@@ -27,8 +27,8 @@ export class AuthService {
     const nonce = uuidv4();
     const cacheKey = `nonce:${walletAddress}`;
 
-    // Store nonce in cache with 2 minutes TTL (120 seconds)
-    await this.cacheService.set(cacheKey, nonce, 120);
+    // Store nonce in cache with 2 minutes TTL (120000 milliseconds)
+    await this.cacheService.set(cacheKey, nonce, 2 * 60 * 1000);
 
     return nonce;
   }
@@ -57,7 +57,7 @@ export class AuthService {
       // Get nonce from cache
       let nonce: string | null;
       try {
-        nonce = await this.cacheService.get<string>(cacheKey);
+        nonce = await this.cacheService.get(cacheKey);
       } catch (error) {
         this.logger.error(
           `Failed to retrieve nonce from cache: ${error.message}`,

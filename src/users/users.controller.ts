@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Get, Body, Patch, UseGuards, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -14,7 +14,7 @@ import { JwtAuthGuard, CurrentUser, AuthenticatedUser } from '../auth';
 @ApiTags('Users')
 @Controller('users')
 @UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -114,5 +114,61 @@ export class UsersController {
       user.walletAddress,
       updateUserDto,
     );
+  }
+
+  @Get('me/transactions')
+  @ApiOperation({
+    summary: 'Get current user transaction history',
+    description:
+      'Get transaction history for the current authenticated user with pagination support.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Transaction history retrieved successfully',
+    examples: {
+      'transaction-history': {
+        summary: 'User transaction history',
+        value: [
+          {
+            id: 1,
+            amount: 100.0,
+            type: 'DEPOSIT',
+            description: 'Deposit via Stripe',
+            createdAt: '2025-01-29T10:30:00Z',
+          },
+          {
+            id: 2,
+            amount: 25.5,
+            type: 'WITHDRAWAL',
+            description: 'Purchase payment',
+            createdAt: '2025-01-28T15:20:00Z',
+          },
+        ],
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing JWT token',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  async getTransactionHistory(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const transactions = await this.usersService.getTransactionHistory(
+      user.walletAddress,
+      limit ? parseInt(limit) : 10,
+      offset ? parseInt(offset) : 0,
+    );
+
+    return {
+      success: true,
+      data: transactions,
+    };
   }
 }

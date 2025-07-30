@@ -16,8 +16,18 @@ export class AppController {
   @UseInterceptors(CacheInterceptor)
   @CacheKey('hello')
   @CacheTTL(60000) // 1 minute
-  @ApiOperation({ summary: 'Get hello message' })
-  @ApiResponse({ status: 200, description: 'Hello message' })
+  @ApiOperation({
+    summary: 'Get hello message',
+    description: 'Public endpoint - No authentication required',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Hello message',
+    schema: {
+      type: 'string',
+      example: 'Hello World!',
+    },
+  })
   getHello(): string {
     return this.appService.getHello();
   }
@@ -26,7 +36,11 @@ export class AppController {
   @UseInterceptors(CacheInterceptor)
   @CacheKey('health-check')
   @CacheTTL(30000) // 30 seconds
-  @ApiOperation({ summary: 'Health check endpoint' })
+  @ApiOperation({
+    summary: 'Health check endpoint',
+    description:
+      'Check application and database connectivity - No authentication required',
+  })
   @ApiResponse({
     status: 200,
     description: 'Application health status',
