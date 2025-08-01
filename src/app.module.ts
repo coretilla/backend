@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { StripeModule } from './stripe/stripe.module';
 import { PaymentsModule } from './payments/payments.module';
 import { StripeWebhookController } from './webhooks/stripe-webhook.controller';
+import { FinanceModule } from './finance/finance.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { StripeWebhookController } from './webhooks/stripe-webhook.controller';
     AuthModule,
     StripeModule,
     PaymentsModule,
+    FinanceModule,
   ],
   controllers: [AppController, StripeWebhookController],
   providers: [AppService],

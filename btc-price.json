@@ -1,0 +1,14 @@
+{
+  "data": [
+    {
+      "symbol": "BTC",
+      "prices": [
+        {
+          "currency": "usd",
+          "value": "118689.3569860667",
+          "lastUpdatedAt": "2025-07-31T07:03:43Z"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  UseGuards,
+  HttpStatus,
+  HttpCode,
+  Logger,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiBody,
+} from '@nestjs/swagger';
+import { FinanceService } from './finance.service';
+import { SwapDto } from './dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+
+@ApiTags('Finance')
+@Controller('finance')
+export class FinanceController {
+  private readonly logger = new Logger(FinanceController.name);
+
+  constructor(private readonly financeService: FinanceService) {}
+
+  @Get('btc-price')
+  @ApiOperation({
+    summary: 'Get current BTC price',
+    description: 'Get current Bitcoin price in USD (public endpoint)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Current BTC price retrieved successfully',
+    example: {
+      success: true,
+      data: {
+        symbol: 'BTC',
+        price: 45000.0,
+        currency: 'USD',
+        timestamp: '2025-08-01T20:10:00.000Z',
+      },
+    },
+  })
+  async getBtcPrice() {
+    try {
+      const priceData = await this.financeService.getBtcPrice();
+      const price = priceData.data[0].prices[0].value;
+
+      return {
+        success: true,
+        data: {
+          symbol: 'BTC',
+          price: price,
+          currency: 'USD',
+          timestamp: new Date().toISOString(),
+        },
+      };
+    } catch (error) {
+      this.logger.error('Failed to get BTC price', error.stack);
+      throw error;
+    }
+  }
+
+  @Post('swap')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Swap USD balance to BTC',
+    description:
+      'Convert USD balance from user account to BTC and send to their wallet address',
+  })
+  @ApiBody({
+    type: SwapDto,
+    description: 'Swap request details',
+    examples: {
+      example1: {
+        summary: 'Basic swap request',
+        value: {
+          amount: 100.5,
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Swap completed successfully',
+    example: {
+      success: true,
+      message: 'Swap completed successfully',
+      data: {
+        transactionHash: '0x1234567890abcdef...',
+        btcAmount: 0.00123456,
+        btcPrice: 45000.0,
+        usdAmount: 100.5,
+        remainingBalance: 899.5,
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - Invalid amount or insufficient balance',
+    example: {
+      statusCode: 400,
+      message: 'Insufficient balance',
+      error: 'Bad Request',
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing JWT token',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error - Swap transaction failed',
+  })
+  async swap(@Body() swapDto: SwapDto, @CurrentUser() user: AuthenticatedUser) {
+    this.logger.log(
+      `Swap request from user: ${user.walletAddress}, amount: ${swapDto.amount}`,
+    );
+
+    try {
+      const result = await this.financeService.swap({
+        walletAddress: user.walletAddress,
+        amount: swapDto.amount,
+      });
+
+      this.logger.log(
+        `Swap completed successfully for user: ${user.walletAddress}`,
+      );
+
+      return {
+        success: true,
+        message: 'Swap completed successfully',
+        data: result,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Swap failed for user: ${user.walletAddress}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+}

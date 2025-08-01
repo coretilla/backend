@@ -2,11 +2,15 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     rawBody: true, // Enable raw body for Stripe webhooks
   });
+
+  // Global exception filter
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -55,6 +59,7 @@ All other endpoints require JWT Bearer token authentication.
     .addTag('Authentication', 'Authentication endpoints (public)')
     .addTag('Users', 'User management endpoints (protected)')
     .addTag('Payments', 'Payment and deposit endpoints (protected)')
+    .addTag('Finance', 'Finance and swap endpoints (protected)')
     .addTag('Webhooks', 'Webhook endpoints (internal)')
     .addBearerAuth(
       {

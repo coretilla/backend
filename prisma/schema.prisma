@@ -41,15 +41,19 @@ model Deposit {
 }
 
 model Transaction {
-    id            Int             @id @default(autoincrement())
-    user_id       Int
-    type          TransactionType
-    amount        Decimal         @db.Decimal(15, 2)
-    description   String?
-    reference_id  String? // deposit_id, withdrawal_id, etc
-    balance_after Decimal         @db.Decimal(15, 2)
-    metadata      Json?
-    created_at    DateTime        @default(now())
+    id               Int             @id @default(autoincrement())
+    user_id          Int
+    type             TransactionType
+    amount           Decimal         @db.Decimal(15, 2)
+    btc_amount       Decimal?        @db.Decimal(20, 8) // For swap transactions
+    btc_price        Decimal?        @db.Decimal(15, 2) // BTC price at time of swap
+    transaction_hash String? // Blockchain transaction hash
+    status           String?         @default("COMPLETED")
+    description      String?
+    reference_id     String? // deposit_id, withdrawal_id, etc
+    balance_after    Decimal         @db.Decimal(15, 2)
+    metadata         Json?
+    created_at       DateTime        @default(now())
 
     // Relations
     user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -70,4 +74,5 @@ enum TransactionType {
     WITHDRAWAL
     TRANSFER_IN
     TRANSFER_OUT
+    SWAP
 }
