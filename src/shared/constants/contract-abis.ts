@@ -1,3 +1,8 @@
+/**
+ * Smart Contract ABIs
+ * These are contract interfaces used across multiple modules
+ */
+
 export const MOCK_BTC_ABI = [
   {
     inputs: [
@@ -66,7 +71,6 @@ export const MOCK_BTC_ABI = [
       },
     ],
     name: 'Approval',
-    anonymous: false,
     type: 'event',
   },
   {
@@ -81,100 +85,113 @@ export const MOCK_BTC_ABI = [
       },
     ],
     name: 'Transfer',
-    anonymous: false,
     type: 'event',
   },
   {
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     inputs: [
       { name: 'owner', internalType: 'address', type: 'address' },
       { name: 'spender', internalType: 'address', type: 'address' },
     ],
     name: 'allowance',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     stateMutability: 'view',
     type: 'function',
   },
   {
-    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
     inputs: [
       { name: 'spender', internalType: 'address', type: 'address' },
       { name: 'value', internalType: 'uint256', type: 'uint256' },
     ],
     name: 'approve',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
     stateMutability: 'nonpayable',
     type: 'function',
   },
   {
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
     name: 'balanceOf',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     stateMutability: 'view',
     type: 'function',
   },
   {
-    outputs: [],
-    inputs: [{ name: 'amount', internalType: 'uint256', type: 'uint256' }],
-    name: 'burn',
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    outputs: [{ name: '', internalType: 'uint8', type: 'uint8' }],
     inputs: [],
     name: 'decimals',
+    outputs: [{ name: '', internalType: 'uint8', type: 'uint8' }],
     stateMutability: 'view',
     type: 'function',
   },
   {
+    inputs: [],
+    name: 'name',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'renounceOwnership',
     outputs: [],
-    inputs: [
-      { name: 'to', internalType: 'address', type: 'address' },
-      { name: 'amount', internalType: 'uint256', type: 'uint256' },
-    ],
-    name: 'mint',
     stateMutability: 'nonpayable',
     type: 'function',
   },
   {
-    outputs: [{ name: '', internalType: 'string', type: 'string' }],
-    inputs: [],
-    name: 'name',
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    outputs: [{ name: '', internalType: 'string', type: 'string' }],
     inputs: [],
     name: 'symbol',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
     stateMutability: 'view',
     type: 'function',
   },
   {
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     inputs: [],
     name: 'totalSupply',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     stateMutability: 'view',
     type: 'function',
   },
   {
-    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
     inputs: [
       { name: 'to', internalType: 'address', type: 'address' },
       { name: 'value', internalType: 'uint256', type: 'uint256' },
     ],
     name: 'transfer',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
     stateMutability: 'nonpayable',
     type: 'function',
   },
   {
-    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
     inputs: [
       { name: 'from', internalType: 'address', type: 'address' },
       { name: 'to', internalType: 'address', type: 'address' },
       { name: 'value', internalType: 'uint256', type: 'uint256' },
     ],
     name: 'transferFrom',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
     stateMutability: 'nonpayable',
     type: 'function',
   },
-];
+  {
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'to', internalType: 'address', type: 'address' },
+      { name: 'amount', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'mint',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+] as const;

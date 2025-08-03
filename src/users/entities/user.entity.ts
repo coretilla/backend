@@ -26,6 +26,37 @@ export class User {
   balance: number;
 
   @ApiProperty({
+    description: 'User $CORE on-chain balance',
+    example: 1000,
+  })
+  coreBalance: number;
+
+  @ApiProperty({
+    description: 'User WBTC on-chain balance',
+    example: 0.5,
+  })
+  wbtcBalance: number;
+
+  @ApiProperty({
+    description: 'User WBTC balance in USD',
+    example: 48500.0,
+  })
+  wbtcBalanceInUsd: number;
+
+  @ApiProperty({
+    description: 'User $CORE balance in USD',
+    example: 1200.0,
+  })
+  coreBalanceInUsd: number;
+
+  @ApiProperty({
+    description:
+      'Total assets in USD (balance + wbtcBalanceInUsd + coreBalanceInUsd)',
+    example: 49850.5,
+  })
+  totalAssetInUsd: number;
+
+  @ApiProperty({
     description: 'Account creation timestamp',
     example: '2025-01-29T10:30:00Z',
   })

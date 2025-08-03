@@ -12,7 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { createPublicClient, createWalletClient, http } from 'viem';
 import { coreTestnet2 } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
-import { MOCK_BTC_ABI } from './constants';
+import { MOCK_BTC_ABI } from '../shared/constants';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
@@ -132,15 +132,8 @@ export class FinanceService {
         return cachedPrice;
       }
 
-      const alchemyApiKey = this.configService.get<string>('ALCHEMY_API_KEY');
-
-      if (!alchemyApiKey) {
-        throw new InternalServerErrorException(
-          'Alchemy API key not configured',
-        );
-      }
-
-      this.logger.log('Fetching fresh BTC price from Alchemy API');
+      const alchemyApiKey =
+        this.configService.getOrThrow<string>('ALCHEMY_API_KEY');
 
       const response = await fetch(
         'https://api.g.alchemy.com/prices/v1/tokens/by-symbol?symbols=BTC',

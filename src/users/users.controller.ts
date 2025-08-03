@@ -1,10 +1,20 @@
-import { Controller, Get, Body, Patch, UseGuards, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Body,
+  Patch,
+  UseGuards,
+  Query,
+  ParseIntPipe,
+  DefaultValuePipe,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBody,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto';
@@ -22,7 +32,7 @@ export class UsersController {
   @ApiOperation({
     summary: 'Get current user profile (login or create)',
     description:
-      'Get current user profile based on JWT token. If user does not exist, it will be created automatically.',
+      'Get current user profile based on JWT token with real-time on-chain balances. If user does not exist, it will be created automatically. Returns USD balance from database and live CORE/WBTC balances from blockchain.',
   })
   @ApiResponse({
     status: 200,
@@ -35,6 +45,14 @@ export class UsersController {
           id: 1,
           name: 'John Doe',
           wallet_address: '0x742d35Cc6596B0C7c5d3D4e3b2b0C8C6e7D8E9F0',
+          balance: 150.5,
+          coreBalance: 1000,
+          wbtcBalance: 0.5,
+          wbtcBalanceInUsd: 48500.0,
+          coreBalanceInUsd: 1200.0,
+          totalAssetInUsd: 49850.5,
+          created_at: '2025-01-29T10:30:00Z',
+          updated_at: '2025-01-29T10:35:00Z',
         },
       },
       'new-user': {
@@ -43,6 +61,14 @@ export class UsersController {
           id: 2,
           name: 'user-0x742d35Cc6596B0C7c5d3D4e3b2b0C8C6e7D8E9F0',
           wallet_address: '0x742d35Cc6596B0C7c5d3D4e3b2b0C8C6e7D8E9F0',
+          balance: 0,
+          coreBalance: 0,
+          wbtcBalance: 0,
+          wbtcBalanceInUsd: 0,
+          coreBalanceInUsd: 0,
+          totalAssetInUsd: 0,
+          created_at: '2025-08-03T10:30:00Z',
+          updated_at: '2025-08-03T10:30:00Z',
         },
       },
     },
@@ -68,7 +94,7 @@ export class UsersController {
   @ApiOperation({
     summary: 'Update current user profile',
     description:
-      'Update current user profile based on JWT token. Only name can be updated.',
+      'Update current user profile based on JWT token with updated on-chain balances. Only name can be updated. Returns updated profile with real-time CORE/WBTC balances.',
   })
   @ApiBody({
     type: UpdateUserDto,
@@ -94,6 +120,14 @@ export class UsersController {
           id: 1,
           name: 'New Name',
           wallet_address: '0x742d35Cc6596B0C7c5d3D4e3b2b0C8C6e7D8E9F0',
+          balance: 150.5,
+          coreBalance: 1000,
+          wbtcBalance: 0.5,
+          wbtcBalanceInUsd: 48500.0,
+          coreBalanceInUsd: 1200.0,
+          totalAssetInUsd: 49850.5,
+          created_at: '2025-01-29T10:30:00Z',
+          updated_at: '2025-08-03T11:00:00Z',
         },
       },
     },
@@ -121,6 +155,20 @@ export class UsersController {
     summary: 'Get current user transaction history',
     description:
       'Get transaction history for the current authenticated user with pagination support.',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of transactions to return (1-100, default: 10)',
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'Number of transactions to skip (default: 0)',
+    example: 0,
   })
   @ApiResponse({
     status: 200,
@@ -157,13 +205,13 @@ export class UsersController {
   })
   async getTransactionHistory(
     @CurrentUser() user: AuthenticatedUser,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number,
   ) {
     const transactions = await this.usersService.getTransactionHistory(
       user.walletAddress,
-      limit ? parseInt(limit) : 10,
-      offset ? parseInt(offset) : 0,
+      limit,
+      offset,
     );
 
     return {
