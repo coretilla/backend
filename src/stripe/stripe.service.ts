@@ -71,7 +71,18 @@ export class StripeService {
     paymentMethodId: string,
   ): Promise<Stripe.PaymentIntent> {
     try {
-      const paymentIntent = await this.stripe.paymentIntents.confirm(
+      // First, retrieve the payment intent to check its status
+      const paymentIntent =
+        await this.stripe.paymentIntents.retrieve(paymentIntentId);
+
+      // If already succeeded, return it without confirming again
+      if (paymentIntent.status === 'succeeded') {
+        this.logger.log(`Payment intent already confirmed: ${paymentIntentId}`);
+        return paymentIntent;
+      }
+
+      // If not succeeded, attempt to confirm
+      const confirmedPaymentIntent = await this.stripe.paymentIntents.confirm(
         paymentIntentId,
         {
           payment_method: paymentMethodId,
@@ -79,7 +90,7 @@ export class StripeService {
       );
 
       this.logger.log(`Payment intent confirmed: ${paymentIntentId}`);
-      return paymentIntent;
+      return confirmedPaymentIntent;
     } catch (error) {
       this.logger.error(`Failed to confirm payment intent: ${error.message}`);
       throw new BadRequestException('Failed to confirm payment');
