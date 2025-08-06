@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FinanceController } from './finance.controller';
 import { FinanceService } from './finance.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('FinanceController', () => {

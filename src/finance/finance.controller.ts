@@ -7,6 +7,7 @@ import {
   HttpStatus,
   HttpCode,
   Logger,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -14,6 +15,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { FinanceService } from './finance.service';
 import { SwapDto } from './dto';
@@ -146,6 +148,66 @@ export class FinanceController {
     } catch (error) {
       this.logger.error(
         `Swap failed for user: ${user.walletAddress}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  @Get('stake-history')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get staking history',
+    description:
+      'Retrieve staking history for the authenticated user wallet address from the blockchain',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Staking history retrieved successfully',
+    example: {
+      success: true,
+      data: [
+        {
+          transactionHash: '0x1234567890abcdef...',
+          blockNumber: '6916750',
+          amount: '1.0',
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing JWT token',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error - Failed to retrieve staking history',
+    example: {
+      statusCode: 500,
+      message: 'Failed to retrieve staking history',
+      error: 'Internal Server Error',
+    },
+  })
+  async getStakeHistory(@CurrentUser() user: AuthenticatedUser) {
+    const walletAddress = user.walletAddress;
+    this.logger.log(`Stake history request for wallet: ${walletAddress}`);
+
+    try {
+      const stakeHistory =
+        await this.financeService.getStakeHistory(walletAddress);
+
+      this.logger.log(
+        `Stake history retrieved successfully for wallet: ${walletAddress}`,
+      );
+
+      return {
+        success: true,
+        data: stakeHistory,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to get stake history for wallet: ${walletAddress}`,
         error.stack,
       );
       throw error;

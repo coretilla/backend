@@ -9,7 +9,14 @@ import {
 import { SwapDto } from './dto';
 import { PrismaService } from 'src/database';
 import { ConfigService } from '@nestjs/config';
-import { createPublicClient, createWalletClient, http } from 'viem';
+import {
+  createPublicClient,
+  createWalletClient,
+  http,
+  parseAbi,
+  parseAbiItem,
+  formatEther,
+} from 'viem';
 import { coreTestnet2 } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 import { MOCK_BTC_ABI } from '../shared/constants';
@@ -116,6 +123,65 @@ export class FinanceService {
       }
 
       throw new InternalServerErrorException('Swap transaction failed');
+    }
+  }
+
+  async getStakeHistory(walletAddress: string) {
+    try {
+      this.logger.log(`Fetching stake history for wallet: ${walletAddress}`);
+
+      // Check if STAKING_VAULT_ADDRESS is configured
+      const stakingVaultAddress = this.configService.get<string>(
+        'STAKING_VAULT_ADDRESS',
+      );
+      if (!stakingVaultAddress) {
+        throw new InternalServerErrorException(
+          'Staking vault address not configured',
+        );
+      }
+
+      const publicClient = createPublicClient({
+        chain: coreTestnet2,
+        transport: http(),
+      });
+
+      const latestBlock = await publicClient.getBlockNumber();
+      this.logger.log(`Latest block number: ${latestBlock}`);
+
+      const stakingHistory = await publicClient.getLogs({
+        address: stakingVaultAddress as `0x${string}`,
+        event: parseAbiItem(
+          'event Staked(address indexed user, uint256 amount)',
+        ),
+        args: {
+          user: walletAddress as `0x${string}`,
+        },
+        fromBlock: 6916746n,
+        toBlock: latestBlock,
+      });
+
+      console.log('Staking History:', stakingHistory);
+
+      const formattedHistory = stakingHistory.map((log) => ({
+        transactionHash: log.transactionHash,
+        blockNumber: log.blockNumber.toString(),
+        amount: formatEther(log.args.amount || 0n),
+      }));
+
+      return formattedHistory;
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch stake history for wallet: ${walletAddress}`,
+        error.stack,
+      );
+
+      if (error instanceof InternalServerErrorException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        'Failed to retrieve staking history',
+      );
     }
   }
 
