@@ -232,7 +232,6 @@ export class FinanceController {
           transactionHash: '0x1234567890abcdef...',
           blockNumber: '6916750',
           btcAmount: '0.5',
-          timestamp: null,
         },
       ],
     },

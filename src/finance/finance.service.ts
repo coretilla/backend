@@ -234,7 +234,6 @@ export class FinanceService {
         transactionHash: log.transactionHash,
         blockNumber: log.blockNumber.toString(),
         btcAmount: formatEther(log.args.btcAmount || 0n),
-        timestamp: null, // You might want to fetch block timestamp if needed
       }));
 
       return formattedHistory;
