@@ -213,4 +213,77 @@ export class FinanceController {
       throw error;
     }
   }
+
+  @Get('collateral-deposit-history')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get collateral deposit history',
+    description:
+      'Retrieve collateral deposit history for the authenticated user wallet address from the blockchain',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Collateral deposit history retrieved successfully',
+    example: {
+      success: true,
+      data: [
+        {
+          transactionHash: '0x1234567890abcdef...',
+          blockNumber: '6916750',
+          btcAmount: '0.5',
+          timestamp: null,
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - Invalid wallet address format',
+    example: {
+      statusCode: 400,
+      message: 'Invalid wallet address format',
+      error: 'Bad Request',
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing JWT token',
+  })
+  @ApiResponse({
+    status: 500,
+    description:
+      'Internal server error - Failed to retrieve collateral deposit history',
+    example: {
+      statusCode: 500,
+      message: 'Failed to retrieve collateral deposit history',
+      error: 'Internal Server Error',
+    },
+  })
+  async getCollateralDepositHistory(@CurrentUser() user: AuthenticatedUser) {
+    const walletAddress = user.walletAddress;
+    this.logger.log(
+      `Collateral deposit history request for wallet: ${walletAddress}`,
+    );
+
+    try {
+      const depositHistory =
+        await this.financeService.getCollateralDeposit(walletAddress);
+
+      this.logger.log(
+        `Collateral deposit history retrieved successfully for wallet: ${walletAddress}`,
+      );
+
+      return {
+        success: true,
+        data: depositHistory,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to get collateral deposit history for wallet: ${walletAddress}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
 }

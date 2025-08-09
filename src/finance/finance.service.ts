@@ -185,6 +185,78 @@ export class FinanceService {
     }
   }
 
+  async getCollateralDeposit(walletAddress: string) {
+    try {
+      this.logger.log(
+        `Fetching collateral deposit history for wallet: ${walletAddress}`,
+      );
+
+      // Validate wallet address
+      if (!walletAddress || !walletAddress.startsWith('0x')) {
+        throw new BadRequestException('Invalid wallet address format');
+      }
+
+      // Check if LENDING_POOL_ADDRESS is configured
+      const lendingPoolAddress = this.configService.get<string>(
+        'LENDING_POOL_ADDRESS',
+      );
+      if (!lendingPoolAddress) {
+        throw new InternalServerErrorException(
+          'Lending pool address not configured',
+        );
+      }
+
+      const publicClient = createPublicClient({
+        chain: coreTestnet2,
+        transport: http(),
+      });
+
+      const latestBlock = await publicClient.getBlockNumber();
+      this.logger.log(`Latest block number: ${latestBlock}`);
+
+      const depositHistory = await publicClient.getLogs({
+        address: lendingPoolAddress as `0x${string}`,
+        event: parseAbiItem(
+          'event CollateralDeposited(address indexed user, uint256 btcAmount)',
+        ),
+        args: {
+          user: walletAddress as `0x${string}`,
+        },
+        fromBlock: 6916746n,
+        toBlock: latestBlock,
+      });
+
+      this.logger.log(
+        `Found ${depositHistory.length} collateral deposits for ${walletAddress}`,
+      );
+
+      const formattedHistory = depositHistory.map((log) => ({
+        transactionHash: log.transactionHash,
+        blockNumber: log.blockNumber.toString(),
+        btcAmount: formatEther(log.args.btcAmount || 0n),
+        timestamp: null, // You might want to fetch block timestamp if needed
+      }));
+
+      return formattedHistory;
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch collateral deposit history for wallet: ${walletAddress}`,
+        error.stack,
+      );
+
+      if (
+        error instanceof BadRequestException ||
+        error instanceof InternalServerErrorException
+      ) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        'Failed to retrieve collateral deposit history',
+      );
+    }
+  }
+
   async getBtcPrice() {
     return this.getBitcoinPrice();
   }
