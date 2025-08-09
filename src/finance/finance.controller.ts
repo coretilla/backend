@@ -285,4 +285,72 @@ export class FinanceController {
       throw error;
     }
   }
+
+  @Get('loan-history')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get loan history',
+    description:
+      'Retrieve loan history for the authenticated user wallet address from the blockchain',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Loan history retrieved successfully',
+    example: {
+      success: true,
+      data: [
+        {
+          transactionHash: '0x1234567890abcdef...',
+          blockNumber: '6916750',
+          amount: '1000.0',
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - Invalid wallet address format',
+    example: {
+      statusCode: 400,
+      message: 'Invalid wallet address format',
+      error: 'Bad Request',
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing JWT token',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error - Failed to retrieve loan history',
+    example: {
+      statusCode: 500,
+      message: 'Failed to retrieve loan history',
+      error: 'Internal Server Error',
+    },
+  })
+  async getLoanHistory(@CurrentUser() user: AuthenticatedUser) {
+    const walletAddress = user.walletAddress;
+    this.logger.log(`Loan history request for wallet: ${walletAddress}`);
+
+    try {
+      const loanHistory = await this.financeService.getLoan(walletAddress);
+
+      this.logger.log(
+        `Loan history retrieved successfully for wallet: ${walletAddress}`,
+      );
+
+      return {
+        success: true,
+        data: loanHistory,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to get loan history for wallet: ${walletAddress}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
 }
