@@ -8,7 +8,7 @@ import { CacheService } from '../cache/cache.service';
 import { UpdateUserDto } from './dto';
 import { User } from './entities';
 import { createPublicClient, formatEther, http, PublicClient } from 'viem';
-import { coreTestnet2 } from 'viem/chains';
+import { coreDao } from 'viem/chains';
 import { ConfigService } from '@nestjs/config';
 import { MOCK_BTC_ABI } from '../shared/constants';
 
@@ -25,7 +25,7 @@ export class UsersService {
   ) {
     // Initialize viem client once during service instantiation
     this.publicClient = createPublicClient({
-      chain: coreTestnet2,
+      chain: coreDao,
       transport: http(),
     });
 

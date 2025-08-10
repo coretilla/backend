@@ -17,7 +17,7 @@ import {
   parseAbiItem,
   formatEther,
 } from 'viem';
-import { coreTestnet2 } from 'viem/chains';
+import { coreDao } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 import { MOCK_BTC_ABI } from '../shared/constants';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -141,7 +141,7 @@ export class FinanceService {
       }
 
       const publicClient = createPublicClient({
-        chain: coreTestnet2,
+        chain: coreDao,
         transport: http(),
       });
 
@@ -207,7 +207,7 @@ export class FinanceService {
       }
 
       const publicClient = createPublicClient({
-        chain: coreTestnet2,
+        chain: coreDao,
         transport: http(),
       });
 
@@ -276,7 +276,7 @@ export class FinanceService {
       }
 
       const publicClient = createPublicClient({
-        chain: coreTestnet2,
+        chain: coreDao,
         transport: http(),
       });
 
@@ -385,13 +385,13 @@ export class FinanceService {
       const account = privateKeyToAccount(privateKey as `0x${string}`);
 
       const publicClient = createPublicClient({
-        chain: coreTestnet2,
+        chain: coreDao,
         transport: http(),
       });
 
       const walletClient = createWalletClient({
         account,
-        chain: coreTestnet2,
+        chain: coreDao,
         transport: http(),
       });
 
