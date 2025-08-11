@@ -109,14 +109,6 @@ pnpm run test:cov
 📌 Full API documentation available on **Swagger**:  
 [https://core-backend-production-0965.up.railway.app/api#/](https://core-backend-production-0965.up.railway.app/api#/)
 
----
-
-## 🌐 Network
-
-- **CoreDAO Testnet 2** – [Explorer](https://scan.test2.btcs.network/)
-
----
-
 ## 📜 License
 
 MIT License – You are free to use, modify, and distribute this code.
