@@ -7,14 +7,13 @@ import { PrismaService } from '../database/prisma.service';
 import { CacheService } from '../cache/cache.service';
 import { UpdateUserDto } from './dto';
 import { User } from './entities';
-import { createPublicClient, formatEther, http, PublicClient } from 'viem';
-import { coreDao } from 'viem/chains';
+import { formatEther } from 'viem';
 import { ConfigService } from '@nestjs/config';
 import { MOCK_BTC_ABI } from '../shared/constants';
+import { BlockchainService } from '../common';
 
 @Injectable()
 export class UsersService {
-  private publicClient: PublicClient;
   private mockBtcAddress: `0x${string}`;
   private readonly BALANCE_CACHE_TTL = 30; // Cache balance for 30 seconds
 
@@ -22,13 +21,8 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly cacheService: CacheService,
+    private readonly blockchainService: BlockchainService,
   ) {
-    // Initialize viem client once during service instantiation
-    this.publicClient = createPublicClient({
-      chain: coreDao,
-      transport: http(),
-    });
-
     this.mockBtcAddress = this.configService.getOrThrow<string>(
       'MOCK_BTC_ADDRESS',
     ) as `0x${string}`;
@@ -54,20 +48,19 @@ export class UsersService {
     const address = walletAddress as `0x${string}`;
 
     try {
-      // Fetch both balances in parallel for better performance
-      const [coreBalance, wbtcBalance] = await Promise.all([
-        this.publicClient.getBalance({ address }),
-        this.publicClient.readContract({
-          address: this.mockBtcAddress,
-          abi: MOCK_BTC_ABI,
-          functionName: 'balanceOf',
-          args: [address],
-        }) as Promise<bigint>,
+      // Fetch both balances in parallel for better performance using BlockchainService
+      const [coreBalanceResult, wbtcBalanceResult] = await Promise.all([
+        this.blockchainService.getBalance(address),
+        this.blockchainService.getTokenBalance(
+          this.mockBtcAddress,
+          address,
+          MOCK_BTC_ABI as unknown as any[],
+        ),
       ]);
 
       const balances = {
-        coreBalance: Number(formatEther(coreBalance)),
-        wbtcBalance: Number(formatEther(wbtcBalance)),
+        coreBalance: Number(coreBalanceResult.formatted),
+        wbtcBalance: Number(wbtcBalanceResult.formatted),
       };
 
       // Cache the result for better performance
@@ -183,7 +176,7 @@ export class UsersService {
    * @returns Promise<User> - User object with USD balance and on-chain balances
    */
   async getCurrentUserOrCreate(walletAddress: string): Promise<User> {
-    if (!this.isValidWalletAddress(walletAddress)) {
+    if (!this.blockchainService.isValidAddress(walletAddress)) {
       throw new ConflictException('Invalid wallet address format');
     }
 
@@ -237,7 +230,7 @@ export class UsersService {
     walletAddress: string,
     updateUserDto: UpdateUserDto,
   ): Promise<User> {
-    if (!this.isValidWalletAddress(walletAddress)) {
+    if (!this.blockchainService.isValidAddress(walletAddress)) {
       throw new ConflictException('Invalid wallet address format');
     }
 
@@ -264,7 +257,7 @@ export class UsersService {
    * @returns Promise<Array> - Array of user transactions
    */
   async getTransactionHistory(walletAddress: string, limit = 10, offset = 0) {
-    if (!this.isValidWalletAddress(walletAddress)) {
+    if (!this.blockchainService.isValidAddress(walletAddress)) {
       throw new ConflictException('Invalid wallet address format');
     }
 
@@ -309,12 +302,5 @@ export class UsersService {
   async invalidateBalanceCache(walletAddress: string): Promise<void> {
     const cacheKey = `balances:${walletAddress}`;
     await this.cacheService.del(cacheKey);
-  }
-
-  /**
-   * Validate if wallet address is valid Ethereum address
-   */
-  private isValidWalletAddress(address: string): boolean {
-    return /^0x[a-fA-F0-9]{40}$/.test(address);
   }
 }

@@ -9,19 +9,11 @@ import {
 import { SwapDto } from './dto';
 import { PrismaService } from 'src/database';
 import { ConfigService } from '@nestjs/config';
-import {
-  createPublicClient,
-  createWalletClient,
-  http,
-  parseAbi,
-  parseAbiItem,
-  formatEther,
-} from 'viem';
-import { coreDao } from 'viem/chains';
-import { privateKeyToAccount } from 'viem/accounts';
+import { parseAbiItem } from 'viem';
 import { MOCK_BTC_ABI } from '../shared/constants';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+import { BlockchainService } from '../common';
 
 @Injectable()
 export class FinanceService {
@@ -33,6 +25,7 @@ export class FinanceService {
     private configService: ConfigService,
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private blockchainService: BlockchainService,
   ) {}
 
   async swap(swapDto: SwapDto) {
@@ -140,33 +133,13 @@ export class FinanceService {
         );
       }
 
-      const publicClient = createPublicClient({
-        chain: coreDao,
-        transport: http(),
-      });
+      // Use BlockchainService to get staking history
+      const formattedHistory = await this.blockchainService.getStakingHistory(
+        stakingVaultAddress,
+        walletAddress,
+      );
 
-      const latestBlock = await publicClient.getBlockNumber();
-      this.logger.log(`Latest block number: ${latestBlock}`);
-
-      const stakingHistory = await publicClient.getLogs({
-        address: stakingVaultAddress as `0x${string}`,
-        event: parseAbiItem(
-          'event Staked(address indexed user, uint256 amount)',
-        ),
-        args: {
-          user: walletAddress as `0x${string}`,
-        },
-        fromBlock: 6916746n,
-        toBlock: latestBlock,
-      });
-
-      console.log('Staking History:', stakingHistory);
-
-      const formattedHistory = stakingHistory.map((log) => ({
-        transactionHash: log.transactionHash,
-        blockNumber: log.blockNumber.toString(),
-        amount: formatEther(log.args.amount || 0n),
-      }));
+      console.log('Staking History:', formattedHistory);
 
       return formattedHistory;
     } catch (error) {
@@ -192,7 +165,7 @@ export class FinanceService {
       );
 
       // Validate wallet address
-      if (!walletAddress || !walletAddress.startsWith('0x')) {
+      if (!this.blockchainService.isValidAddress(walletAddress)) {
         throw new BadRequestException('Invalid wallet address format');
       }
 
@@ -206,15 +179,10 @@ export class FinanceService {
         );
       }
 
-      const publicClient = createPublicClient({
-        chain: coreDao,
-        transport: http(),
-      });
-
-      const latestBlock = await publicClient.getBlockNumber();
+      const latestBlock = await this.blockchainService.getLatestBlockNumber();
       this.logger.log(`Latest block number: ${latestBlock}`);
 
-      const depositHistory = await publicClient.getLogs({
+      const depositHistory = await this.blockchainService.getLogs({
         address: lendingPoolAddress as `0x${string}`,
         event: parseAbiItem(
           'event CollateralDeposited(address indexed user, uint256 btcAmount)',
@@ -233,7 +201,9 @@ export class FinanceService {
       const formattedHistory = depositHistory.map((log) => ({
         transactionHash: log.transactionHash,
         blockNumber: log.blockNumber.toString(),
-        btcAmount: formatEther(log.args.btcAmount || 0n),
+        btcAmount: this.blockchainService.formatTokenAmount(
+          log.args.btcAmount || 0n,
+        ),
       }));
 
       return formattedHistory;
@@ -261,7 +231,7 @@ export class FinanceService {
       this.logger.log(`Fetching loan history for wallet: ${walletAddress}`);
 
       // Validate wallet address
-      if (!walletAddress || !walletAddress.startsWith('0x')) {
+      if (!this.blockchainService.isValidAddress(walletAddress)) {
         throw new BadRequestException('Invalid wallet address format');
       }
 
@@ -275,15 +245,10 @@ export class FinanceService {
         );
       }
 
-      const publicClient = createPublicClient({
-        chain: coreDao,
-        transport: http(),
-      });
-
-      const latestBlock = await publicClient.getBlockNumber();
+      const latestBlock = await this.blockchainService.getLatestBlockNumber();
       this.logger.log(`Latest block number: ${latestBlock}`);
 
-      const loanHistory = await publicClient.getLogs({
+      const loanHistory = await this.blockchainService.getLogs({
         address: lendingPoolAddress as `0x${string}`,
         event: parseAbiItem(
           'event LoanTaken(address indexed user, uint256 usdtAmount)',
@@ -300,7 +265,9 @@ export class FinanceService {
       const formattedHistory = loanHistory.map((log) => ({
         transactionHash: log.transactionHash,
         blockNumber: log.blockNumber.toString(),
-        amount: formatEther(log.args.usdtAmount || 0n),
+        amount: this.blockchainService.formatTokenAmount(
+          log.args.usdtAmount || 0n,
+        ),
       }));
 
       return formattedHistory;
@@ -382,29 +349,15 @@ export class FinanceService {
         );
       }
 
-      const account = privateKeyToAccount(privateKey as `0x${string}`);
-
-      const publicClient = createPublicClient({
-        chain: coreDao,
-        transport: http(),
-      });
-
-      const walletClient = createWalletClient({
-        account,
-        chain: coreDao,
-        transport: http(),
-      });
-
       // Convert BTC amount to wei (18 decimals) with proper precision handling
-      const btcAmountWei = this.convertToWei(btcAmount);
+      const btcAmountWei = this.blockchainService.convertToWei(btcAmount);
 
       this.logger.log(
         `Converting ${btcAmount} BTC to ${btcAmountWei.toString()} wei`,
       );
 
-      // Simulate contract interaction
-      const { request } = await publicClient.simulateContract({
-        account,
+      // Execute the transaction using BlockchainService
+      const hash = await this.blockchainService.executeContract({
         address: this.configService.getOrThrow<string>(
           'MOCK_BTC_ADDRESS',
         ) as `0x${string}`,
@@ -412,9 +365,6 @@ export class FinanceService {
         functionName: 'transfer',
         args: [walletAddress as `0x${string}`, btcAmountWei],
       });
-
-      // Execute the transaction
-      const hash = await walletClient.writeContract(request);
 
       this.logger.log(`Blockchain transaction sent: ${hash}`);
 
@@ -424,31 +374,6 @@ export class FinanceService {
       throw new InternalServerErrorException(
         'Failed to execute blockchain transaction',
       );
-    }
-  }
-
-  /**
-   * Convert decimal number to BigInt wei (18 decimals)
-   * Handles precision properly to avoid BigInt conversion errors
-   */
-  private convertToWei(amount: number): bigint {
-    try {
-      // Convert to string with fixed precision to avoid floating point issues
-      const amountStr = amount.toFixed(18);
-
-      // Split by decimal point
-      const [integerPart, decimalPart = ''] = amountStr.split('.');
-
-      // Pad decimal part to 18 digits
-      const paddedDecimal = decimalPart.padEnd(18, '0');
-
-      // Combine integer and decimal parts
-      const weiString = integerPart + paddedDecimal;
-
-      return BigInt(weiString);
-    } catch (error) {
-      this.logger.error(`Failed to convert ${amount} to wei`, error);
-      throw new InternalServerErrorException('Amount conversion failed');
     }
   }
 }
